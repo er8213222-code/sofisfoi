@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>El Taconazo POS</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#080808;color:#fff;font-family:Arial,sans-serif}
+header{background:#000;color:#ffd400;text-align:center;padding:14px;font-size:27px;font-weight:900;border-bottom:2px solid #ffd400}
+.wrap{max-width:900px;margin:auto;padding:10px}
+nav{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;position:sticky;top:0;background:#080808;padding-bottom:8px;z-index:5}
+nav button{background:#171717;color:#fff;border:1px solid #444;border-radius:9px;padding:13px 3px;font-weight:900}nav button.active{background:#ffd400;color:#000}
+section{display:none}section.active{display:block}h2{color:#ffd400;font-size:22px}
+.box,.product,.history{background:#151515;border:1px solid #303030;border-radius:12px;padding:10px;margin-bottom:9px}.newTable{margin-top:9px;width:100%;background:#ffd400;color:#000;border:0;border-radius:10px;padding:12px;font-weight:900;font-size:15px}
+label{font-weight:900;display:block;margin-bottom:6px}
+input{background:#000;color:#fff;border:2px solid #555;border-radius:8px;padding:10px;font-size:18px;font-weight:900}input[type=number]{width:58px;text-align:center}
+.productHead{display:flex;align-items:center;justify-content:space-between;gap:8px}.productName{font-size:18px;font-weight:900}
+.addVariant{background:#333;color:#fff;border:1px solid #666;border-radius:7px;padding:8px;font-weight:900}
+.variant{margin-top:8px;padding:8px;border-top:1px solid #333;background:#0e0e0e;border-radius:8px}
+.variantTop{display:flex;justify-content:space-between;align-items:center}.qty{display:flex;align-items:center;gap:4px}
+.qty button{width:38px;height:38px;border:0;border-radius:7px;font-size:23px;font-weight:900}.plus{background:#ffd400}.minus{background:#333;color:#fff}
+.opts{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.opts button{background:#151515;color:#fff;border:1px solid #555;border-radius:7px;padding:6px 8px;font-size:12px;font-weight:900}.opts .on{background:#ffd400;color:#000}
+.remove{background:#8d0000;color:#fff;border:0;border-radius:7px;padding:6px 8px;font-weight:900}
+.actions{display:flex;gap:7px;margin-top:12px}.clear{background:#171717;color:#fff;border:2px solid #555;border-radius:10px;padding:14px;font-weight:900}.send{flex:1;background:#e30613;color:#fff;border:0;border-radius:10px;padding:14px;font-size:19px;font-weight:900}
+.msg{text-align:center;color:#ffd400;font-weight:900;min-height:20px}.summary{background:#000;border:1px solid #333;border-radius:12px;padding:10px;margin-top:12px}.summaryTitle{color:#ffd400;font-weight:900}.line{padding:3px 0}.empty{text-align:center;color:#888;padding:25px}
+.day{color:#ffd400;font-weight:900;font-size:18px;margin:20px 0 4px}.dayNote{color:#777;font-size:11px;margin-bottom:8px}
+.historyHead{display:flex;justify-content:space-between}.num{color:#ffd400;font-size:20px;font-weight:900}.type{color:#aaa;font-size:12px}.historyProducts{border-top:1px solid #333;margin-top:8px;padding-top:8px}
+.historyButtons{border-top:2px solid #333;margin-top:20px;padding-top:15px}.historyButtons button{width:100%;padding:14px;margin-bottom:8px;border-radius:10px;font-weight:900}.secondary{background:#171717;color:#fff;border:2px solid #555}
+.brand{text-align:center;color:#777;font-size:13px;font-weight:700;margin-top:18px;padding:6px}
+
+.jornadaBtn{background:#ffd400;color:#000;border:0;border-radius:10px;padding:15px;width:100%;font-size:17px;font-weight:900;margin-top:4px}
+#credits{position:fixed;inset:0;background:#000;z-index:9999;display:none;overflow:hidden}
+#credits.show{display:block}
+.creditsRoll{position:absolute;left:10%;right:10%;top:100%;text-align:center;animation:creditsUp 16s linear forwards;color:#fff}
+.creditsRoll .big{font-size:32px;color:#ffd400;font-weight:900;margin-bottom:34px}
+.creditsRoll h3{font-size:24px;margin:28px 0 10px;color:#ffd400}
+.creditsRoll p{font-size:18px;font-weight:700;margin:8px 0;line-height:1.5}
+.creditsRoll .thanks{font-size:26px;margin-top:45px}
+.creditsClose{position:fixed;right:15px;top:15px;background:#222;color:#fff;border:1px solid #555;border-radius:8px;padding:9px 13px;font-weight:900;z-index:2}
+@keyframes creditsUp{from{transform:translateY(0)}to{transform:translateY(-145vh)}}
+
+#loginScreen{position:fixed;inset:0;background:#080808;z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px}
+.loginBox{width:min(420px,100%);background:#151515;border:1px solid #333;border-radius:16px;padding:28px;text-align:center;box-shadow:0 10px 40px #000}
+.loginLogo{font-size:34px;font-weight:900;color:#ffd400;margin-bottom:10px}
+.loginTitle{font-size:22px;font-weight:900;margin:8px 0 18px}
+#pinInput{width:100%;text-align:center;font-size:24px;letter-spacing:5px}
+.loginBtn{width:100%;margin-top:12px;background:#ffd400;color:#000;border:0;border-radius:10px;padding:14px;font-size:18px;font-weight:900}
+#loginError{min-height:22px;color:#ff3030;font-weight:900;font-size:26px;margin-top:10px;display:none}
+#app{display:none}
+</style>
+</head>
+
+<body>
+
+<div id="loginScreen">
+<div class="loginBox">
+<div class="loginLogo">🌮 EL TACONAZO</div>
+<div class="loginTitle">Acceso al Point of Sale</div>
+<input id="pinInput" type="password" autocomplete="off" inputmode="text" placeholder="Código de acceso">
+<button class="loginBtn" onclick="login()">ENTRAR</button>
+<div id="loginError"></div>
+</div>
+</div>
+
+<div id="app">
+
+<header>🌮 EL TACONAZO</header>
+
+<div class="wrap">
+
+<nav>
+<button id="nAqui" class="active" onclick="show('aqui')">aquí</button>
+<button id="nLlevar" onclick="show('llevar')">llevar</button>
+<button id="nPedido" onclick="show('pedido')">pedido</button>
+<button id="nHist" onclick="show('historial')">historial</button>
+</nav>
+
+<section id="aqui" class="active">
+<h2>AQUÍ</h2>
+<div class="box">
+<label>Mesa</label>
+<input id="mesa" type="number" min="1" placeholder="Número de mesa">
+<button class="newTable" onclick="newTable()">🧹 NUEVA MESA</button>
+</div>
+
+<div id="menuAqui"></div>
+
+<div class="summary">
+<div class="summaryTitle">PEDIDO</div>
+<div id="sumAqui" class="empty">Todavía no hay productos.</div>
+</div>
+
+<div class="actions">
+<button class="clear" onclick="clearOrder('aqui')">VACIAR</button>
+<button class="send" onclick="sendOrder('aqui')">MANDAR</button>
+</div>
+
+<div id="msgAqui" class="msg"></div>
+</section>
+
+<section id="llevar">
+<h2>LLEVAR</h2>
+<div id="menuLlevar"></div>
+
+<div class="summary">
+<div class="summaryTitle">PEDIDO</div>
+<div id="sumLlevar" class="empty">Todavía no hay productos.</div>
+</div>
+
+<div class="actions">
+<button class="clear" onclick="clearOrder('llevar')">VACIAR</button>
+<button class="send" onclick="sendOrder('llevar')">MANDAR</button>
+</div>
+
+<div id="msgLlevar" class="msg"></div>
+</section>
+
+<section id="pedido">
+<h2>PEDIDO</h2>
+<div id="menuPedido"></div>
+
+<div class="box">
+<label>Domicilio</label>
+<input id="domicilio" type="text" placeholder="Calle, colonia o negocio">
+</div>
+
+<div class="summary">
+<div class="summaryTitle">PEDIDO</div>
+<div id="sumPedido" class="empty">Todavía no hay productos.</div>
+</div>
+
+<div class="actions">
+<button class="clear" onclick="clearOrder('pedido')">VACIAR</button>
+<button class="send" onclick="sendOrder('pedido')">MANDAR</button>
+</div>
+
+<div id="msgPedido" class="msg"></div>
+</section>
+
+<section id="historial">
+<h2>HISTORIAL</h2>
+
+<div id="historyList">
+<div class="empty">No hay pedidos todavía.</div>
+</div>
+
+<div class="historyButtons">
+<button class="jornadaBtn" onclick="endJornada()">🎬 TERMINAR JORNADA</button>
+<button class="secondary" onclick="erasePhone()">📱 BORRAR PEDIDOS DEL TELÉFONO</button>
+<button class="secondary" onclick="eraseTV()">📺 BORRAR PEDIDOS DE LA TV</button>
+</div>
+</section>
+
+<div class="brand">By: Emiliano Studios ® </div>
+
+</div>
+
+<div id="credits">
+<button class="creditsClose" onclick="closeCredits()">✕</button>
+
+<div class="creditsRoll">
+<div class="big">🌮 EL TACONAZO</div>
+
+<h3>FIN DE LA JORNADA</h3>
+<p>Gracias por el trabajo de hoy.</p>
+<p>Todos los pedidos quedaron registrados.</p>
+
+<h3>PERSONAL</h3>
+<p>Meseros</p>
+<p>Cocina</p>
+<p>Reparto</p>
+
+<h3>PRODUCCIÓN</h3>
+<p>EL TACONAZO</p>
+<p>Point of Sale</p>
+
+<p class="thanks">¡Nos vemos mañana!</p>
+<p>By: Emiliano Studios ®</p>
+</div>
+</div>
+
+<script>
+const ACCESS_CODE="qwertyu000escribe";
+let errorTimer=null;
+
+function login(){
+  const input=document.getElementById("pinInput");
+  const err=document.getElementById("loginError");
+  const value=input.value;
+
+  if(value===ACCESS_CODE){
+    clearTimeout(errorTimer);
+    err.textContent="";
+    err.style.display="none";
+
+    document.getElementById("loginScreen").style.display="none";
+    document.getElementById("app").style.display="block";
+
+    sessionStorage.setItem("pos_access","1");
+    pip();
+  }else{
+    input.value="";
+    input.focus();
+
+    err.textContent="ERROR";
+    err.style.display="block";
+
+    clearTimeout(errorTimer);
+    errorTimer=setTimeout(()=>{
+      err.textContent="";
+      err.style.display="none";
+    },1800);
+  }
+}
+
+function checkAccess(){
+  if(sessionStorage.getItem("pos_access")==="1"){
+    document.getElementById("loginScreen").style.display="none";
+    document.getElementById("app").style.display="block";
+  }else{
+    document.getElementById("pinInput").focus();
+  }
+}
+
+const products=[
+{id:"tacoRes",name:"Taco RES"},
+{id:"tacoAdo",name:"Taco ADO"},
+{id:"tortaRes",name:"Torta RES"},
+{id:"tortaAdo",name:"Torta ADO"}
+];
+
+const drinks=[
+{id:"coca",name:"Coca"},
+{id:"sprite",name:"Sprite"},
+{id:"fanta",name:"Fanta"},
+{id:"agua",name:"Agua"},
+{id:"agua_mineral",name:"Agua Mineral"}
+];
+
+const orders={aqui:[],llevar:[],pedido:[]};
+
+const cap=s=>s[0].toUpperCase()+s.slice(1),
+variant=()=>({qty:0,harina:false,sc:false,sceb:false});
+
+function build(){
+["aqui","llevar","pedido"].forEach(t=>{
+let box=document.getElementById("menu"+cap(t));
+
+products.forEach(p=>{
+let e=document.createElement("div");
+e.className="product";
+e.id=t+"-"+p.id;
+
+e.innerHTML=
+`<div class="productHead">
+<div class="productName">${p.name}</div>
+<button class="addVariant" onclick="addV('${t}','${p.id}')">+ variante</button>
+</div>
+<div class="variants"></div>`;
+
+box.appendChild(e);
+});
+
+let b=document.createElement("div");
+b.style="color:#ffd400;font-weight:900;margin:16px 0 8px";
+b.textContent="BEBIDAS";
+box.appendChild(b);
+
+drinks.forEach(p=>{
+let e=document.createElement("div");
+e.className="product";
+e.id=t+"-"+p.id;
+
+e.innerHTML=
+`<div class="productHead">
+<div class="productName">${p.name}</div>
+<div class="qty">
+<button class="minus" onclick="drink('${t}','${p.id}',-1)">−</button>
+<input id="${t}-${p.id}-q" type="number" min="0" value="0" onchange="setDrink('${t}','${p.id}',this.value)">
+<button class="plus" onclick="drink('${t}','${p.id}',1)">+</button>
+</div>
+</div>`;
+
+box.appendChild(e);
+});
+});
+}
+
+function get(t,p){
+return orders[t].find(x=>x.pid===p)
+}
+
+function addV(t,p){
+let d=get(t,p);
+
+if(d)d.v.push(variant());
+else orders[t].push({pid:p,v:[variant()]});
+
+render(t,p);
+summary(t)
+}
+
+function render(t,p){
+let d=get(t,p),
+c=document.querySelector("#"+t+"-"+p+" .variants");
+
+c.innerHTML="";
+
+if(!d)return;
+
+d.v.forEach((v,i)=>{
+let e=document.createElement("div");
+e.className="variant";
+
+e.innerHTML=
+`<div class="variantTop">
+<div class="qty">
+<button class="minus" onclick="chg('${t}','${p}',${i},-1)">−</button>
+<input type="number" min="0" value="${v.qty}" onchange="setV('${t}','${p}',${i},this.value)">
+<button class="plus" onclick="chg('${t}','${p}',${i},1)">+</button>
+</div>
+<button class="remove" onclick="remV('${t}','${p}',${i})">×</button>
+</div>
+
+<div class="opts">
+<button class="${v.harina?'on':''}" onclick="tog('${t}','${p}',${i},'harina')">HARINA</button>
+<button class="${v.sc?'on':''}" onclick="tog('${t}','${p}',${i},'sc')">S/C</button>
+<button class="${v.sceb?'on':''}" onclick="tog('${t}','${p}',${i},'sceb')">S/CEB</button>
+<button class="${v.sc&&v.sceb?'on':''}" onclick="both('${t}','${p}',${i})">S/V</button>
+</div>`;
+
+c.appendChild(e);
+});
+}
+
+function chg(t,p,i,n){
+let d=get(t,p);
+d.v[i].qty=Math.max(0,d.v[i].qty+n);
+render(t,p);
+summary(t)
+}
+
+function setV(t,p,i,x){
+let d=get(t,p);
+d.v[i].qty=Math.max(0,parseInt(x)||0);
+render(t,p);
+summary(t)
+}
+
+function tog(t,p,i,k){
+let d=get(t,p);
+d.v[i][k]=!d.v[i][k];
+render(t,p);
+summary(t)
+}
+
+function both(t,p,i){
+let v=get(t,p).v[i],
+on=!(v.sc&&v.sceb);
+
+v.sc=on;
+v.sceb=on;
+
+render(t,p);
+summary(t)
+}
+
+function remV(t,p,i){
+let d=get(t,p);
+
+d.v.splice(i,1);
+
+if(!d.v.length)
+orders[t]=orders[t].filter(x=>x.pid!==p);
+
+render(t,p);
+summary(t)
+}
+
+function drink(t,p,n){
+let e=document.getElementById(t+"-"+p+"-q");
+
+e.value=Math.max(0,(parseInt(e.value)||0)+n);
+
+summary(t)
+}
+
+function setDrink(t,p,x){
+document.getElementById(t+"-"+p+"-q").value=Math.max(0,parseInt(x)||0);
+summary(t)
+}
+
+function ex(v){
+let a=[];
+
+if(v.harina)a.push("harina");
+
+if(v.sc&&v.sceb)
+a.push("s/v");
+else{
+if(v.sc)a.push("s/c");
+if(v.sceb)a.push("s/ceb")
+}
+
+return a.length?" — "+a.join(" — "):""
+}
+
+function summary(t){
+let h="",ok=false;
+
+orders[t].forEach(x=>{
+let p=products.find(y=>y.id===x.pid);
+
+x.v.forEach(v=>{
+if(v.qty){
+ok=true;
+h+=`<div class="line">${v.qty} ${p.name}${ex(v)}</div>`
+}
+})
+});
+
+drinks.forEach(d=>{
+let q=parseInt(document.getElementById(t+"-"+d.id+"-q").value)||0;
+
+if(q){
+ok=true;
+h+=`<div class="line">${q} ${d.name}</div>`
+}
+});
+
+document.getElementById("sum"+cap(t)).innerHTML=
+ok?h:'<div class="empty">Todavía no hay productos.</div>'
+}
+
+function newTable(){
+const m=document.getElementById("mesa").value.trim();
+
+if(!m){
+msg("aqui","Primero indica el número de mesa.");
+return
+}
+
+if(!confirm("¿Nuevo cliente en la Mesa "+m+"? Se limpiará el pedido actual, pero el historial se conservará."))
+return;
+
+pip();
+
+localStorage.removeItem(key("aqui",m));
+
+orders.aqui=[];
+
+products.forEach(p=>render("aqui",p.id));
+
+drinks.forEach(d=>
+document.getElementById("aqui-"+d.id+"-q").value=0
+);
+
+summary("aqui");
+
+document.getElementById("mesa").value=m;
+
+msg("aqui","Mesa "+m+" lista para el nuevo cliente. Su próximo pedido será #01.");
+}
+
+function clearOrder(t){
+orders[t]=[];
+
+products.forEach(p=>render(t,p.id));
+
+drinks.forEach(d=>
+document.getElementById(t+"-"+d.id+"-q").value=0
+);
+
+if(t==="aqui")mesa.value="";
+
+if(t==="pedido")domicilio.value="";
+
+summary(t)
+}
+
+function key(t,m){
+return t==="aqui"
+?"pos_counter_v2_mesa_"+m
+:"pos_counter_v2_"+t
+}
+
+function next(t,m){
+let k=key(t,m),
+n=(parseInt(localStorage.getItem(k))||0)+1;
+
+localStorage.setItem(k,n);
+
+return n
+}
+
+function sendOrder(t){
+let ok=
+orders[t].some(x=>x.v.some(v=>v.qty))||
+drinks.some(d=>
+parseInt(document.getElementById(t+"-"+d.id+"-q").value)>0
+);
+
+if(!ok){
+msg(t,"Agrega un producto.");
+return
+}
+
+let m="",d="";
+
+if(t==="aqui"){
+m=mesa.value.trim();
+
+if(!m){
+msg(t,"Falta la mesa.");
+return
+}
+}
+
+if(t==="pedido"){
+d=domicilio.value.trim();
+
+if(!d){
+msg(t,"Falta el domicilio.");
+return
+}
+}
+
+let p={
+numero:next(t,m),
+tipo:t,
+mesa:m,
+domicilio:d,
+fecha:new Date().toISOString().slice(0,10),
+productos:[]
+};
+
+orders[t].forEach(x=>{
+let pr=products.find(y=>y.id===x.pid);
+
+x.v.forEach(v=>{
+if(v.qty)
+p.productos.push({
+nombre:pr.name,
+cantidad:v.qty,
+harina:v.harina,
+sc:v.sc,
+sceb:v.sceb
+})
+})
+});
+
+drinks.forEach(x=>{
+let q=parseInt(
+document.getElementById(t+"-"+x.id+"-q").value
+)||0;
+
+if(q)
+p.productos.push({
+nombre:x.name,
+cantidad:q
+})
+});
+
+let h=JSON.parse(
+localStorage.getItem(deviceHistoryKey())||"[]"
+);
+
+h.push(p);
+
+localStorage.setItem(
+deviceHistoryKey(),
+JSON.stringify(h)
+);
+
+msg(
+t,
+"Pedido #"+String(p.numero).padStart(2,"0")+" enviado."
+);
+
+setTimeout(()=>clearOrder(t),600)
+}
+
+function msg(t,x){
+let e=document.getElementById("msg"+cap(t));
+
+e.textContent=x;
+
+setTimeout(()=>e.textContent="",1600)
+}
+
+function show(t){
+document.querySelectorAll("section")
+.forEach(x=>x.classList.remove("active"));
+
+document.getElementById(t).classList.add("active");
+
+document.querySelectorAll("nav button")
+.forEach(x=>x.classList.remove("active"));
+
+document.getElementById({
+aqui:"nAqui",
+llevar:"nLlevar",
+pedido:"nPedido",
+historial:"nHist"
+}[t]).classList.add("active");
+
+if(t==="historial")
+historyRender();
+else
+summary(t)
+}
+
+function dateText(s){
+let a=s.split("-").map(Number),
+
+names=[
+"enero",
+"febrero",
+"marzo",
+"abril",
+"mayo",
+"junio",
+"julio",
+"agosto",
+"septiembre",
+"octubre",
+"noviembre",
+"diciembre"
+];
+
+return a[2]+" de "+names[a[1]-1]+" de "+a[0]
+}
+
+function historyRender(){
+let l=document.getElementById("historyList"),
+
+h=JSON.parse(
+localStorage.getItem(deviceHistoryKey())||"[]"
+);
+
+if(!h.length){
+l.innerHTML='<div class="empty">No hay pedidos todavía.</div>';
+return
+}
+
+let g={};
+
+h.forEach(p=>
+(g[p.fecha]??=[]).push(p)
+);
+
+l.innerHTML=
+Object.keys(g)
+.sort()
+.reverse()
+.map(d=>
+
+`<div class="day">📅 ${dateText(d)}</div>
+<div class="dayNote">
+Todos los pedidos desde las 12:00 a. m. hasta las 11:59 p. m.
+</div>`
+
++
+
+g[d]
+.slice()
+.reverse()
+.map(p=>
+
+`<div class="history">
+
+<div class="historyHead">
+<div class="num">#${String(p.numero).padStart(2,"0")}</div>
+<div class="type">${p.tipo}</div>
+</div>
+
+<div>
+${p.tipo==="aqui"
+?"Mesa "+p.mesa
+:p.tipo==="pedido"
+?"Domicilio: "+p.domicilio
+:"Para llevar"}
+</div>
+
+<div class="historyProducts">
+
+${p.productos
+.map(x=>
+`<div>${x.cantidad} ${x.nombre}${ex(x)}</div>`
+)
+.join("")}
+
+</div>
+
+</div>`
+
+)
+.join("")
+
+)
+.join("")
+
+}
+
+function deviceHistoryKey(){
+return isTV()
+?"pos_history_tv"
+:"pos_history_phone"
+}
+
+function isTV(){
+return /TV|Tizen|Web0S|WebOS|SMART-TV|SmartTV/i
+.test(navigator.userAgent)
+}
+
+function reset(device){
+const prefix="pos_counter_";
+
+if(device==="phone")
+Object.keys(localStorage)
+.filter(k=>k.startsWith(prefix))
+.forEach(k=>localStorage.removeItem(k));
+
+if(device==="tv")
+Object.keys(localStorage)
+.filter(k=>k.startsWith(prefix))
+.forEach(k=>localStorage.removeItem(k));
+}
+
+function erasePhone(){
+if(confirm(
+"¿Borrar pedidos del teléfono y reiniciar la numeración desde #01?"
+)){
+localStorage.removeItem("pos_history_phone");
+
+Object.keys(localStorage)
+.filter(k=>k.startsWith("pos_counter_v2_"))
+.forEach(k=>localStorage.removeItem(k));
+
+historyRender();
+
+alert("Listo. El próximo pedido comenzará en #01.");
+}
+}
+
+function eraseTV(){
+if(confirm(
+"¿Borrar pedidos de la TV y reiniciar su numeración desde #01?"
+)){
+localStorage.removeItem("pos_history_tv");
+
+Object.keys(localStorage)
+.filter(k=>k.startsWith("pos_counter_v2_"))
+.forEach(k=>localStorage.removeItem(k));
+
+historyRender();
+
+alert("Listo. La TV comenzará en #01.");
+}
+}
+
+let audioCtx=null;
+
+function pip(){
+try{
+audioCtx=
+audioCtx||
+new (window.AudioContext||window.webkitAudioContext)();
+
+const o=audioCtx.createOscillator(),
+g=audioCtx.createGain();
+
+o.type="sine";
+o.frequency.value=880;
+
+g.gain.setValueAtTime(
+.0001,
+audioCtx.currentTime
+);
+
+g.gain.exponentialRampToValueAtTime(
+.12,
+audioCtx.currentTime+.01
+);
+
+g.gain.exponentialRampToValueAtTime(
+.0001,
+audioCtx.currentTime+.12
+);
+
+o.connect(g);
+g.connect(audioCtx.destination);
+
+o.start();
+o.stop(audioCtx.currentTime+.13);
+
+}catch(e){}
+}
+
+function stopAudio(){
+try{
+if(audioCtx){
+audioCtx.close();
+audioCtx=null;
+}
+}catch(e){
+audioCtx=null;
+}
+}
+
+function tada(){
+try{
+stopAudio();
+
+audioCtx=
+new (window.AudioContext||window.webkitAudioContext)();
+
+const melody=[
+[392,.28],
+[392,.28],
+[440,.28],
+[523.25,.55],
+[392,.28],
+[440,.28],
+[523.25,.28],
+[659.25,1.05]
+];
+
+let t=audioCtx.currentTime+.05;
+
+melody.forEach(([f,d],i)=>{
+
+const o=audioCtx.createOscillator(),
+g=audioCtx.createGain();
+
+o.type="sawtooth";
+
+o.frequency.setValueAtTime(f,t);
+
+g.gain.setValueAtTime(.0001,t);
+
+g.gain.linearRampToValueAtTime(
+i===melody.length-1?.16:.11,
+t+.035
+);
+
+g.gain.exponentialRampToValueAtTime(
+.0001,
+t+d-.035
+);
+
+o.connect(g);
+g.connect(audioCtx.destination);
+
+o.start(t);
+o.stop(t+d);
+
+t+=d;
+
+});
+
+}catch(e){}
+}
+
+function sadSong(){
+try{
+stopAudio();
+
+audioCtx=
+new (window.AudioContext||window.webkitAudioContext)();
+
+const notes=[
+261.63,246.94,220,196,
+220,246.94,17
